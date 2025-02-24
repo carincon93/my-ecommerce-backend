@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ecommerce {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  email               String
+  image               String
+  paymentMethodsImageLight String         @default("")
+  paymentMethodsImageDark  String         @default("")
+  logoDark            String
+  logoLight           String
+  faviconDark         String
+  faviconLight        String
+  instagram           String?
+  tiktok              String?
+  facebook            String?
+  whatsapp            String
+  address             String
+  googleMapsUrl       String?
+  
+  shipping            Float               @default(0)
+  freeShippingFrom    Float               @default(0)   
+
+  policies            Policy[]
+  categories          Category[]
+  orders              Order[]
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model Product {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  label               String
+  name                String
+  priceBeforeOff      Float?
+  price               Float
+  description         String
+  colorName           String
+  colorHex            String
+  slug                String              @unique
+
+  categories          ProductCategory[]
+  mainProduct         ProductVariant[]    @relation("ProductToVariants")
+  variants            ProductVariant[]    @relation("ProductVariant") 
+  photos              Photo[]
+  stock               Stock[]
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model Category {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  title               String
+  isMenuVisible       Boolean             @default(false)
+  ecommerceId         String              @db.Uuid
+
+  ecommerce           Ecommerce           @relation(fields: [ecommerceId], references: [id])
+  products            ProductCategory[]
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model ProductCategory {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId           String              @db.Uuid
+  categoryId          String              @db.Uuid
+
+  product             Product             @relation(fields: [productId], references: [id])
+  category            Category            @relation(fields: [categoryId], references: [id])
+}
+
+model ProductVariant {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId           String              @db.Uuid
+  variantId           String              @db.Uuid
+
+  mainProduct         Product             @relation("ProductToVariants", fields: [productId], references: [id])
+  variant             Product             @relation("ProductVariant", fields: [variantId], references: [id])
+
+  @@unique([productId, variantId])
+}
+
+model Customer {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  lastname            String
+  email               String              @unique
+  password            String?
+  address             String
+  country             String
+  city                String
+  state               String
+  phone               String
+  dniType             String
+  dniNumber           String
+
+  orders              Order[]
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model Order {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId          String              @db.Uuid
+  ecommerceId         String              @db.Uuid
+  status              String              @default("pending") // Opcional: "completed", "cancelled"
+  cart                String              
+  totalCart           Float               @default(0)
+  totalWithShipping   Float               @default(0)
+  trackingNumber      String?
+  trackingUrl         String?
+  trackingCompany     String?
+
+  ecommerce           Ecommerce           @relation(fields: [ecommerceId], references: [id])
+  customer            Customer            @relation(fields: [customerId], references: [id])
+  items               OrderItem[]
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model OrderItem {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId             String              @db.Uuid
+  sku                 String              
+  status              String              @default("unpacked") // Opcional: "packed"
+
+  order               Order               @relation(fields: [orderId], references: [id])
+}
+
+model Photo {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId           String              @db.Uuid
+  image               String
+  isSizeGuide         Boolean             @default(false)
+  
+  product             Product             @relation(fields: [productId], references: [id])
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model Stock {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId           String              @db.Uuid
+  size                String
+  quantity            Int
+  sku                 String
+
+  product             Product             @relation(fields: [productId], references: [id])
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model Policy {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title               String
+  content             String
+  ecommerceId         String              @db.Uuid
+
+  ecommerce           Ecommerce           @relation(fields: [ecommerceId], references: [id])
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}

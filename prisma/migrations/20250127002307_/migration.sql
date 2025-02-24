@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN     "totalWithShipping" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ALTER COLUMN "totalCart" SET DEFAULT 0;
